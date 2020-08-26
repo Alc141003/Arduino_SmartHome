@@ -1,0 +1,109 @@
+/*
+Projecto: Modulo Domotica Smarthome ALC 
+Autor: Agustin L. Cocco
+materiales: 
+- lcd 16x2 con I2C
+- Receptor infrarrojo
+- Arduino Nano
+- Modulo Rele 4 canales
+- Dht11 o Dht22
+
+Cuenta: @electronics_ALC
+
+Este codigo es de libre modificacion para todo aquel que quiera usarlo.
+ */
+
+
+#include <Wire.h>                                                      // libreria para la comunicacion I2C                     
+#include <LCD.h>                                                       // libreria control lcd
+#include <LiquidCrystal_I2C.h>                                         // libreria lcd I2C
+
+LiquidCrystal_I2C lcd (0x27, 2, 1, 0, 4, 5, 6, 7);                     //(DR, E, RW, RS, D4, D5, D6, D7)
+
+#include <IRremote.h>                                                  // libreria de control infrarrojo
+
+int SENSOR = 2;                                                        // determinamos el pin 2 IN sensor DHT11
+IRrecv irrecv(SENSOR);                                                 //
+decode_results codigo;                                                 //
+    
+# define boton_1 0xFF30CF                                              // definimos boton_1 al valor codificado HEX
+# define boton_2 0xFF18E7                                              // definimos boton_2 al valor codificado HEX
+# define boton_3 0xFF7A85                                              // definimos boton_3 al valor codificado HEX
+# define boton_4 0xFF10EF                                              // definimos boton_4 al valor codificado HEX
+ 
+int r1 = 3;                                                            // rele 1
+int r2 = 4;                                                            // rele 2
+int r3 = 5;                                                            // rele 3
+int r4 = 6;                                                            // rele 4
+#include <DHT.h>                                                       // librerias del Sensor dht11
+#include <DHT_U.h> 
+
+int STH = 7;                                                           // entrada digital 7 Dht11
+int TEMPERATURA;                                                       // variable para almacenar la temperatura
+int HUMEDAD;                                                           // variable para almacenar la humedad
+
+DHT dht(STH, DHT11);                                                   // creamos el objeto dht y le determinamos el pin de entrada y que modelo es
+void setup() {   
+  Serial.begin(9600);                                                  // inicalizacion del puerto serial a 9600bps
+  irrecv.enableIRIn();                                                 // configuracion de la lcd
+  irrecv.enableIRIn();  
+  lcd.setBacklightPin(3,POSITIVE);                          
+  lcd.setBacklight(HIGH);                                   
+  lcd.begin(16, 2);                                         
+  lcd.clear();
+  dht.begin();                                                        // inicializacion del dht11
+  pinMode(r1,OUTPUT);                                                 // rele 1 salida y en estado bajo
+  digitalWrite(r1,HIGH);
+  pinMode(r2,OUTPUT);                                                 // rele 2 salida y en estado bajo
+  digitalWrite(r2,HIGH);
+  pinMode(r3,OUTPUT);                                                 // rele 3 salida y en estado bajo
+  digitalWrite(r3,HIGH);
+  pinMode(r4,OUTPUT);                                                 // rele 4 salida y en estado bajo
+  digitalWrite(r4,HIGH);
+  
+  
+  }      
+void loop() { 
+  
+  if (irrecv.decode(&codigo)) {                                        // verificamos el valor recibido del Receptor IR 
+    Serial.println(codigo.value,HEX);                                  // imprimimos en hexadecimal el valor obtenido
+    irrecv.resume(); 
+    delay (100); 
+  }
+else {
+  TEMPERATURA = dht.readTemperature();                                 // texto que se muestra en LCD
+  HUMEDAD = dht.readHumidity(); 
+  lcd.setCursor(0,0);
+  lcd.print("  SmartHome ALC");
+  lcd.setCursor(0,2);
+  lcd.print("T: ");
+  lcd.print(TEMPERATURA); 
+  lcd.print(" C");
+  lcd.setCursor(7,2);
+  lcd.print(" H: ");
+  lcd.print(HUMEDAD);
+  lcd.print(" %");
+  delay(1000);
+  lcd.clear();     
+  }
+
+if (codigo.value == boton_1) {                                          // si el valor recibido es igual al boton_1
+digitalWrite(r1,!digitalRead(r1));                                      // se prende o apaga el rele 1
+codigo.value = 0;                                                       // se restablece el valor recibido a 0
+ }
+
+if (codigo.value == boton_2) {                                          // si el valor recibido es igual al boton_2 
+digitalWrite(r2,!digitalRead(r2));                                      // se prende o apaga el rele 2
+codigo.value = 0;                                                       // se restablece el valor recibido a 0
+}
+if (codigo.value == boton_3) {                                          // si el valor recibido es igual al boton_3
+digitalWrite(r3,!digitalRead(r3));                                      // se prende o apaga el rele 3
+codigo.value = 0;                                                       // se restablece el valor recibido a 0
+
+}
+if (codigo.value == boton_4) {                                          // si el valor recibido es igual al boton_4 
+digitalWrite(r4,!digitalRead(r4));                                      // se prende o apaga el rele 4
+codigo.value = 0;                                                       // se restablece el valor recibido a 0
+
+ }
+}
